@@ -36,12 +36,16 @@ Job Post: https://www.workatastartup.com/jobs/82853
 
 > **Leyenda**: 🔴 = CRÍTICO para la vacante | ⚪ = OPCIONAL/BONUS
 
-#### 🔴 Reto 1.1: Async/Await Básico
+#### 🔴 ✅ Reto 1.1: Async/Await Básico - COMPLETADO
 Crea un programa que:
 - Haga 3 peticiones HTTP a diferentes APIs públicas (ejemplo: JSONPlaceholder, OpenWeather, etc.)
 - Use async/await correctamente
 - Maneje errores con try/catch
 - Muestre los resultados en consola
+
+**Status:** ✅ Completado con 3 versiones (simple, intermediate, pro)  
+**Ubicación:** `level_1/asyncs/`  
+**Logros:** Ejecución paralela con Promise.all(), 416ms, código nivel producción
 
 #### 🔴 Reto 1.2: Servidor REST API Simple
 Desarrolla una API REST con Node.js (Express) que:
