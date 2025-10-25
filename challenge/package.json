@@ -20,6 +20,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "amqplib": "^0.10.9",
+    "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "bull": "^4.16.5",
     "cors": "^2.8.5",
