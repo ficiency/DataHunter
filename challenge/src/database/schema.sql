@@ -16,9 +16,6 @@ CREATE TABLE IF NOT EXISTS findings (
     website_url VARCHAR(500) NOT NULL,
     data_type VARCHAR(50) NOT NULL,
     found_value TEXT NOT NULL,
+    screenshot_path VARCHAR(500),
     found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
-
-
