@@ -18,13 +18,15 @@ class CrawlerService extends EventEmitter {
         this.sitesConfig = new SitesConfig();
         this.screenshotHandler = new ScreenshotHandler();
         this.enableScreenshots = options.enableScreenshots ?? true;
+        this.cluster = null;
+        this.scanTrackers = new Map();  // Track progress per scan
     }
 
     // Get cluster config
     getClusterOptions() {
         return {
             concurrency: Cluster.CONCURRENCY_PAGE,       // Create multiple "contexts" (like separated incognito windows)
-            maxConcurrency: 5,                              // Max 5 websites per parallel scan.
+            maxConcurrency: 15,                              // Max 5 websites per parallel scan.
             puppeteer,
             puppeteerOptions: {                           
                 headless: config.puppeteer.headless,        // NO UI
@@ -47,39 +49,75 @@ class CrawlerService extends EventEmitter {
         };
     }
 
+    async init() {
+        if (!this.cluster) {
+            this.cluster = await Cluster.launch(this.getClusterOptions());
+
+            // Define task handler for all scans
+            await this.cluster.task(async ({ page, data }) => {
+                await this.scanSiteWithCluster(page, data);
+            });
+
+            console.log('Persistent cluster initialized');
+        }
+    }
+
     // Main execution with cluster
     async executeScan(scanId, targetName, options = {}) {
         console.log(`Starting scan ${scanId} for "${targetName}"`);
 
         const startTime = Date.now();
-        let cluster = null;
 
         try {
             //Launch cluster
-            cluster = await Cluster.launch(this.getClusterOptions());
-            console.log('Cluster launched.');
+            //cluster = await Cluster.launch(this.getClusterOptions());
+            //console.log('Cluster launched.');
 
             // Set up monitoring events
-            this.setupClusterEvents(cluster, scanId);
+            this.setupClusterEvents(this.cluster, scanId);
 
             // Define the task that each worker will execute
-            await cluster.task(async ({ page, data }) => {
-                await this.scanSiteWithCluster(page, scanId, data);
-            });
+            //await cluster.task(async ({ page, data }) => {
+            //    await this.scanSiteWithCluster(page, scanId, data);
+            //});
 
 
             // Generate URLs and queue them
             const urls = this.sitesConfig.generateUrls(targetName, options);
             console.log(`Queuing ${urls.length} URLs`);
 
-            urls.forEach(({ url, siteName }) => {
-                cluster.queue({ url, siteName, targetName });
+            // Initialize tracker for this scan
+            this.scanTrackers.set(scanId, {
+                total: urls.length,
+                completed: 0,
+                startTime,
+                resolve: null,
+                reject: null
             });
 
+            // Create promise that resolves when all URLs complete
+            const completionPromise = new Promise((resolve, reject) => {
+                this.scanTrackers.get(scanId).resolve = resolve;
+                this.scanTrackers.get(scanId).reject = reject;
+            });
 
-            // Wait for all tasks to complete
-            await cluster.idle();
-            console.log('All tasks completed');
+            for (const { url, siteName } of urls) {
+                this.cluster.queue({ 
+                    url, 
+                    siteName, 
+                    targetName,
+                    scanId
+                });
+                
+                // Equitable distribution
+                if (urls.length > 5) {
+                    await new Promise(resolve => setImmediate(resolve));
+                }
+            }
+
+            // Wait for all URLs to complete
+            await completionPromise;
+            console.log('All tasks completed')
 
             // Mark scan as completed
             await this.updateScanStatus(scanId, 'completed');
@@ -100,11 +138,8 @@ class CrawlerService extends EventEmitter {
            this.emit('scan:failed', { scanId, error: error.message, duration });
            throw error; 
         } finally {
-            // Always close cluster
-            if (cluster) {
-                await cluster.close();
-                console.log('Cluster closed.');
-            }
+            // Cleanup tracker
+            this.scanTrackers.delete(scanId);
         }
     }
 
@@ -129,8 +164,8 @@ class CrawlerService extends EventEmitter {
 
 
     // Scan one website (executed by cluster worker)
-    async scanSiteWithCluster(page, scanId, data) {
-        const { url, siteName, targetName } = data;
+    async scanSiteWithCluster(page, data) {
+        const { url, siteName, targetName, scanId } = data;
 
         try {
             console.log(`[${siteName}] Starting...`);
@@ -186,7 +221,7 @@ class CrawlerService extends EventEmitter {
 
             // Add metadata and save with screenshots
             if (findings.length > 0) {
-                await this.saveFindings(scanId, findings, url, page);  // ✅ CAMBIO: ahora usa el nuevo método con page
+                await this.saveFindings(scanId, findings, url, page);
 
                 this.emit('findings:found', {
                     scanId,
@@ -200,6 +235,22 @@ class CrawlerService extends EventEmitter {
         } catch (error) {
             console.error(`[${siteName}] Error: `, error.message);
             throw error; //Cluster handles retry automatically
+        } finally {
+            // ADD: Increment completion counter
+            this.incrementScanProgress(scanId);
+        }
+    }
+
+    // Track URL completion per scan
+    incrementScanProgress(scanId) {
+        const tracker = this.scanTrackers.get(scanId);
+        if (!tracker) return;
+
+        tracker.completed++;
+        
+        // Check if scan is complete
+        if (tracker.completed >= tracker.total) {
+            tracker.resolve();
         }
     }
 
@@ -294,6 +345,14 @@ class CrawlerService extends EventEmitter {
         );
 
         console.log(`Scan ${scanId} → ${status}`)
+    }
+
+    async shutdown() {
+        if (this.cluster) {
+            await this.cluster.close();
+            this.cluster = null;
+            console.log('Cluster closed');
+        }
     }
 
     /*
