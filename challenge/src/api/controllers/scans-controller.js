@@ -1,8 +1,14 @@
 const db = require('../../database/postgres');
+const queue = require('../../queue/rabbitmq-queue');
+
+// Connect rabbit when starting module
+queue.connect().catch(err =>  {
+    console.error('Failed to connect RabbitMQ:', err.message);
+});
 
 const createScan = async (req, res) => {
     try {
-        const { user_id, target_name } = req.body;
+        const { user_id, target_name, state, city, priority } = req.body;
 
         //Validate input
         if (!user_id || !target_name) {
@@ -22,9 +28,18 @@ const createScan = async (req, res) => {
 
         const scan = result.rows[0];
 
+        // Queue in RabbitMQ instead of direct execution
+        await queue.enqueueScan(
+            scan.id,
+            target_name,
+            { state, city },
+            priority || 5
+        );
+
         res.status(201).json({
-            message: 'Scan created successfully',
-            scan
+            message: 'Scan enqueued successfully',
+            scan,
+            note: 'Check status at GET /api/scans/:id'
         });
     } catch (error) {
         console.error('Error creating scan: ', error);
