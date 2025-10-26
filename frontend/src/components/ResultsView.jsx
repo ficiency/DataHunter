@@ -39,6 +39,17 @@ function WebsiteDetails({ website, findings }) {
 
   const dataTypes = Object.keys(groupedByType)
   const websiteName = getWebsiteName(website)
+  
+  // Get screenshot path (should be the same for all findings from the same site)
+  const screenshotPath = findings[0]?.screenshot_path
+  
+  // Debug logging
+  console.log('🔍 WebsiteDetails Debug:', {
+    website,
+    findingsCount: findings.length,
+    firstFinding: findings[0],
+    screenshotPath
+  })
 
   return (
     <div>
@@ -51,6 +62,32 @@ function WebsiteDetails({ website, findings }) {
           {findings.length} data point{findings.length !== 1 ? 's' : ''}
         </p>
       </div>
+
+      {/* Screenshot */}
+      {screenshotPath && (
+        <div className="mb-4">
+          <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+            Screenshot
+          </h4>
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <img 
+              src={`http://localhost:3000/${screenshotPath}`}
+              alt={`Screenshot of ${websiteName}`}
+              className="w-full h-auto"
+              onError={(e) => {
+                e.target.style.display = 'none'
+                e.target.nextSibling.style.display = 'block'
+              }}
+            />
+            <div 
+              style={{ display: 'none' }}
+              className="p-4 text-center text-gray-400 text-xs"
+            >
+              Screenshot not available
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary by type */}
       <div className="grid grid-cols-2 gap-2 mb-4">
@@ -147,15 +184,20 @@ function ResultsView({ results, onNewScan }) {
   }
 
   const groupedFindings = groupFindingsByWebsite()
+  
+  // Sort websites by number of findings (most to least)
+  const sortedWebsites = Object.entries(groupedFindings).sort((a, b) => {
+    return b[1].length - a[1].length  // Sort descending by findings count
+  })
+  
   const sitesWithData = Object.keys(groupedFindings).length
   const totalFindings = results.findings.length
   const percentage = ((sitesWithData / results.totalSites) * 100).toFixed(1)
 
-  // Auto-select first website on load
+  // Auto-select first website on load (most data points)
   useEffect(() => {
-    const websites = Object.keys(groupedFindings)
-    if (websites.length > 0 && !selectedWebsite) {
-      setSelectedWebsite(websites[0])
+    if (sortedWebsites.length > 0 && !selectedWebsite) {
+      setSelectedWebsite(sortedWebsites[0][0])  // Select website with most findings
     }
   }, [groupedFindings, selectedWebsite])
 
@@ -216,8 +258,8 @@ function ResultsView({ results, onNewScan }) {
 
             {/* Middle Column - Website Cards (45% width) */}
             <div className="flex-shrink-0 space-y-3 overflow-y-auto" style={{ width: '45%', maxHeight: '600px' }}>
-              {Object.entries(groupedFindings).length > 0 ? (
-                Object.entries(groupedFindings).map(([website, findings], index) => (
+              {sortedWebsites.length > 0 ? (
+                sortedWebsites.map(([website, findings], index) => (
                   <motion.div
                     key={website}
                     initial={{ opacity: 0, x: 20 }}
