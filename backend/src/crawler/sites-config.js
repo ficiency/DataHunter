@@ -295,10 +295,327 @@ class SitesConfig {
                 enabled: true,
                 priority: 2,
             },
+            {
+                name: 'BeenVerified',
+                baseUrl: 'https://www.beenverified.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const formatted = parts.map(p => p.toLowerCase()).join('-');
+                    let url = `https://www.beenverified.com/people/${formatted}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'Intelius',
+                baseUrl: 'https://www.intelius.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '-').toLowerCase();
+                    let url = `https://www.intelius.com/people-search/${formatted}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'InstantCheckmate',
+                baseUrl: 'https://www.instantcheckmate.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const formatted = parts.join('-').toLowerCase();
+                    return `https://www.instantcheckmate.com/people/${formatted}`;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'FamilyTreeNow',
+                baseUrl: 'https://www.familytreenow.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const firstName = parts[0] || '';
+                    const lastName = parts.slice(1).join(' ') || '';
+                    let url = `https://www.familytreenow.com/search/genealogy/results?first=${firstName}&last=${lastName}`;
+                    if (state) {
+                        url += `&state=${state.toUpperCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'PublicRecordsNow',
+                baseUrl: 'https://www.publicrecordsnow.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '+');
+                    return `https://www.publicrecordsnow.com/search?name=${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'NeighborWho',
+                baseUrl: 'https://www.neighborwho.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().toLowerCase().replace(/\s+/g, '-');
+                    let url = `https://www.neighborwho.com/name/${formatted}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'PeopleSearchNow',
+                baseUrl: 'https://www.peoplesearchnow.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const formatted = parts.join('-').toLowerCase();
+                    let url = `https://www.peoplesearchnow.com/person/${formatted}`;
+                    if (state) {
+                        url += `-${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'AdvancedBackgroundChecks',
+                baseUrl: 'https://www.advancedbackgroundchecks.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().toLowerCase().replace(/\s+/g, '-');
+                    let url = `https://www.advancedbackgroundchecks.com/names/${formatted}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'CheckPeople',
+                baseUrl: 'https://www.checkpeople.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '+');
+                    return `https://www.checkpeople.com/search?name=${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'USSearch',
+                baseUrl: 'https://www.ussearch.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const firstName = parts[0] || '';
+                    const lastName = parts.slice(1).join(' ') || '';
+                    let url = `https://www.ussearch.com/search?firstName=${firstName}&lastName=${lastName}`;
+                    if (state) {
+                        url += `&state=${state.toUpperCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'Nuwber',
+                baseUrl: 'https://nuwber.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const formatted = parts.map(p => 
+                        p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()
+                    ).join('-');
+                    let url = `https://nuwber.com/search?name=${formatted}`;
+                    if (state) {
+                        url += `&state=${state.toUpperCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'SearchPeopleFree',
+                baseUrl: 'https://www.searchpeoplefree.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const firstName = parts[0] || '';
+                    const lastName = parts.slice(1).join(' ') || '';
+                    let url = `https://www.searchpeoplefree.com/find/${firstName}-${lastName}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'Privateeye',
+                baseUrl: 'https://www.privateeye.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '+');
+                    return `https://www.privateeye.com/people/${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'InfoTracer',
+                baseUrl: 'https://infotracer.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const formatted = parts.join('-').toLowerCase();
+                    let url = `https://infotracer.com/people/${formatted}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'AddressSearch',
+                baseUrl: 'https://www.addresssearch.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().toLowerCase().replace(/\s+/g, '-');
+                    return `https://www.addresssearch.com/people/${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'TrueCaller',
+                baseUrl: 'https://www.truecaller.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = encodeURIComponent(query.trim());
+                    return `https://www.truecaller.com/search/us/${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'PeopleSmart',
+                baseUrl: 'https://www.peoplesmart.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().toLowerCase().replace(/\s+/g, '-');
+                    let url = `https://www.peoplesmart.com/people/${formatted}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'Yasni',
+                baseUrl: 'https://www.yasni.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '+');
+                    return `https://www.yasni.com/${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'Classmates',
+                baseUrl: 'https://www.classmates.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '+');
+                    return `https://www.classmates.com/siteui/search/results?q=${formatted}&searchType=people`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'PhoneOwner',
+                baseUrl: 'https://www.phoneowner.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '+');
+                    return `https://www.phoneowner.com/po/search/name/${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'ReversePhoneLookup',
+                baseUrl: 'https://www.reversephonelookup.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '-');
+                    return `https://www.reversephonelookup.com/people/${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'PublicDataUSA',
+                baseUrl: 'https://www.publicdatausa.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().toLowerCase().replace(/\s+/g, '-');
+                    let url = `https://www.publicdatausa.com/people/${formatted}`;
+                    if (state) {
+                        url += `-${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
+            {
+                name: 'PeopleBackgroundCheck',
+                baseUrl: 'https://www.peoplebackgroundcheck.com',
+                buildUrl: (query, state = null) => {
+                    const parts = query.trim().split(' ');
+                    const firstName = parts[0] || '';
+                    const lastName = parts.slice(1).join(' ') || '';
+                    return `https://www.peoplebackgroundcheck.com/search?firstName=${firstName}&lastName=${lastName}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'VitalRec',
+                baseUrl: 'https://www.vitalrec.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().replace(/\s+/g, '+');
+                    return `https://www.vitalrec.com/search?name=${formatted}`;
+                },
+                enabled: true,
+                priority: 3,
+            },
+            {
+                name: 'CyberBackgroundChecks',
+                baseUrl: 'https://www.cyberbackgroundchecks.com',
+                buildUrl: (query, state = null) => {
+                    const formatted = query.trim().toLowerCase().replace(/\s+/g, '-');
+                    let url = `https://www.cyberbackgroundchecks.com/people/${formatted}`;
+                    if (state) {
+                        url += `/${state.toLowerCase()}`;
+                    }
+                    return url;
+                },
+                enabled: true,
+                priority: 2,
+            },
         ];
 
         this.scanConfig = {
-            maxUrlsPerScan: 15, // Scan all 15 sites
+            maxUrlsPerScan: 40, // Scan all 40 sites
             delayBetweenUrls: 2000,
             timeout: 30000,
             retryFailed: true,
