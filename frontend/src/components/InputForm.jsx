@@ -98,9 +98,12 @@ function InputForm({ onStartScan }) {
       <div className="minimal-card rounded-xl shadow-2xl p-8 border border-border-dark">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-black mb-2 tracking-tight">
-            𓄀 DataHunter
-          </h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <img src="/logo.png" alt="DataHunter Logo" className="h-8 w-8" />
+            <h1 className="text-2xl font-bold text-black tracking-tight">
+              DataHunter
+            </h1>
+          </div>
           <p className="text-gray-500 text-sm">
             Find where your data exists online
           </p>
