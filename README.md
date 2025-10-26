@@ -389,14 +389,13 @@ MIT License - See LICENSE file for details
 
 ## 👤 Author
 
-**Luis** - Technical Challenge for Optery
+**Luis Chapa**
 
 ---
 
 ## 🙏 Acknowledgments
 
 - Built with modern best practices for scalability and security
-- Inspired by Optery's data discovery platform
 - Uses battle-tested libraries: Puppeteer, RabbitMQ, PostgreSQL
 
 ---
