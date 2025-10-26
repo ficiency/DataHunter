@@ -1,6 +1,10 @@
-# 🔍 DataHunter - Data Discovery & Privacy Scanner
-
-A scalable, production-ready web scraping system that discovers personal information across multiple data broker websites. Built with Node.js, Puppeteer, RabbitMQ, and React.
+<div align="center">
+  <img src="docs/gh_logo.png" alt="DataHunter Logo" width="80" style="vertical-align: middle;"/> <h1 style="display: inline;">DataHunter</h1>
+  
+  ### Data Discovery & Privacy Scanner
+  
+  A scalable, production-ready web scraping system that discovers personal information across multiple data broker websites. Built with Node.js, Puppeteer, RabbitMQ, and React.
+</div>
 
 ## 🎬 Demo
 
