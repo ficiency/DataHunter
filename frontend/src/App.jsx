@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import axios from 'axios'
 import InputForm from './components/InputForm'
-import ScanningView from './components/ScanningView'
 import ResultsView from './components/ResultsView'
 import NetworkBackground from './components/NetworkBackground'
 
@@ -10,11 +10,29 @@ function App() {
   const [scanData, setScanData] = useState(null)
   const [scanResults, setScanResults] = useState(null)
   const [activeNodes, setActiveNodes] = useState(0)
+  const [scanId, setScanId] = useState(null)
+  const totalWebsites = 40
 
-  const handleStartScan = (formData) => {
+  const handleStartScan = async (formData) => {
     setScanData(formData)
-    setActiveNodes(0) // Reset nodes
+    setActiveNodes(0)
     setCurrentView('scanning')
+    
+    // Create scan
+    try {
+      const response = await axios.post('/api/scans', {
+        user_id: 'demo_user',
+        target_name: formData.targetName,
+        state: formData.state,
+        priority: 5
+      })
+      
+      setScanId(response.data.scan.id)
+    } catch (error) {
+      console.error('Failed to create scan:', error)
+      alert('Failed to start scan. Please try again.')
+      setCurrentView('input')
+    }
   }
 
   const handleScanComplete = (results) => {
@@ -29,8 +47,37 @@ function App() {
     setScanData(null)
     setScanResults(null)
     setActiveNodes(0)
+    setScanId(null)
     setCurrentView('input')
   }
+
+  // Poll for scan results
+  useEffect(() => {
+    if (!scanId || currentView !== 'scanning') {
+      return
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await axios.get(`/api/scans/${scanId}`)
+        const { scan, findings } = response.data
+
+        // Switch to results view as soon as we have findings
+        if (findings.length > 0) {
+          clearInterval(pollInterval)
+          handleScanComplete({
+            scan,
+            findings,
+            totalSites: totalWebsites
+          })
+        }
+      } catch (error) {
+        console.error('Polling error:', error)
+      }
+    }, 2000)
+
+    return () => clearInterval(pollInterval)
+  }, [scanId, currentView])
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
@@ -52,21 +99,6 @@ function App() {
             transition={{ duration: 0.3 }}
           >
             <InputForm onStartScan={handleStartScan} />
-          </motion.div>
-        )}
-
-        {currentView === 'scanning' && (
-          <motion.div
-            key="scanning"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.5 }}
-          >
-            <ScanningView 
-              scanData={scanData} 
-              onComplete={handleScanComplete} 
-            />
           </motion.div>
         )}
 
