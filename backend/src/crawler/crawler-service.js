@@ -168,6 +168,7 @@ class CrawlerService extends EventEmitter {
     // Scan one website (executed by cluster worker)
     async scanSiteWithCluster(page, data) {
         const { url, siteName, targetName, scanId } = data;
+        const siteStartTime = Date.now();  // Track start time
 
         try {
             console.log(`[${siteName}] Starting...`);
@@ -221,9 +222,13 @@ class CrawlerService extends EventEmitter {
 
             console.log(`[${siteName}] Found ${findings.length} data point(s)`);
 
+            // Calculate processing time
+            const siteEndTime = Date.now();
+            const processingTime = ((siteEndTime - siteStartTime) / 1000).toFixed(3);  // in seconds
+
             // Add metadata and save with screenshots
             if (findings.length > 0) {
-                await this.saveFindings(scanId, findings, url, page);
+                await this.saveFindings(scanId, findings, url, page, processingTime);
 
                 this.emit('findings:found', {
                     scanId,
@@ -232,8 +237,8 @@ class CrawlerService extends EventEmitter {
                 });
             }
 
-            this.emit('site:completed', { scanId, siteName, count: findings.length });
-            console.log(`[${siteName}] Completed`);
+            this.emit('site:completed', { scanId, siteName, count: findings.length, processingTime });
+            console.log(`[${siteName}] Completed in ${processingTime}s`);
         } catch (error) {
             console.error(`[${siteName}] Error: `, error.message);
             throw error; //Cluster handles retry automatically
@@ -286,7 +291,7 @@ class CrawlerService extends EventEmitter {
     }
     */
     // Save findings with screenshots
-    async saveFindings(scanId, findings, url, page) {
+    async saveFindings(scanId, findings, url, page, processingTime) {
         let saved = 0;
         let failed = 0;
 
@@ -313,17 +318,18 @@ class CrawlerService extends EventEmitter {
                 // ENCRYPT the PII before storing
                 const encryptedValue = encrypt(finding.found_value);
 
-                // Insert finding with screenshot path
+                // Insert finding with screenshot path and processing time
                 const result = await db.query(
-                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, found_at, screenshot_path)
-                    VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, found_at, screenshot_path, processing_time)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
                     [
                         scanId,
                         url,
                         finding.data_type,
                         encryptedValue,
                         new Date(),
-                        screenshotPath  // Add screenshot path
+                        screenshotPath,  // Add screenshot path
+                        processingTime   // Add processing time
                     ]
                 );
                 
