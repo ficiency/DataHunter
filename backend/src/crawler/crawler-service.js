@@ -313,16 +313,17 @@ class CrawlerService extends EventEmitter {
                 // ENCRYPT the PII before storing
                 const encryptedValue = encrypt(finding.found_value);
 
-                // Insert finding first to get the ID
+                // Insert finding with screenshot path
                 const result = await db.query(
-                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, found_at)
-                    VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, found_at, screenshot_path)
+                    VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
                     [
                         scanId,
                         url,
                         finding.data_type,
                         encryptedValue,
-                        new Date()
+                        new Date(),
+                        screenshotPath  // Add screenshot path
                     ]
                 );
                 
