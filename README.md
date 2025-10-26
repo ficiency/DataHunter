@@ -11,9 +11,21 @@ A scalable, production-ready web scraping system that discovers personal informa
 
 ## 🎬 Demo
 
-![DataHunter Demo](docs/datahunt_demo.gif)
+![DataHunter Demo](docs/datahunter_demo.gif)
 
 *Real-time scanning across 40 data broker websites with live progress tracking*
+
+---
+
+## 📖 What is a Scan?
+
+A **scan** is a complete search operation for one person (e.g., "John Doe") across all 40 configured data broker websites. Each scan:
+- Uses 15 concurrent browser tabs
+- Searches across 40 different websites
+- Completes in approximately 30 seconds
+- Returns all discovered PII (emails, phones, addresses)
+
+**Example:** If you run 3 scans simultaneously, you're searching for 3 different people at the same time.
 
 ---
 
@@ -43,12 +55,12 @@ Asynchronous job queue with RabbitMQ provides:
 - **Decoupling** - API responds instantly, heavy lifting happens in background
 - **Horizontal Scaling** - Add workers on-demand without code changes
 - **Fault Tolerance** - Failed jobs auto-retry, no data loss
-- **Load Balancing** - Prefetch mechanism (`prefetch=5`) enables 15 concurrent scans with 3 workers
+- **Load Balancing** - Prefetch mechanism (`prefetch=5`) enables 15 people searches simultaneously with 3 workers (600 website searches)
 
 ### **Why Puppeteer Cluster?**
 
 Puppeteer Cluster with persistent browsers:
-- **Concurrency** - 15 parallel browser tabs per worker, processing 40 sites total in ~30 seconds
+- **Concurrency** - 15 parallel browser tabs per worker, processing 40 sites per person in ~30 seconds
 - **Resource Efficiency** - Single browser process per worker (~800MB vs 8GB+ for individual instances)
 - **Stability** - Auto-restarts crashed tabs, maintains cluster health
 - **Real-time Metrics** - Per-website processing time tracking for performance monitoring
@@ -95,24 +107,25 @@ Puppeteer Cluster with persistent browsers:
 
 ## 📈 Performance Metrics
 
-### **Current Performance (40 websites, 1 worker)**
-- **Scan Time:** ~30 seconds (15 concurrent tabs processing 40 sites)
+### **Current Performance (1 scan = 1 person across 40 websites)**
+- **Scan Time:** ~30 seconds per person (15 concurrent tabs)
 - **Memory:** ~800MB per worker
+- **Concurrent Capacity:** 5 people simultaneously = 200 website searches in parallel
 - **Success Rate:** ~32/40 websites (80%) - Some have stronger anti-bot measures
 - **Processing Time/Site:** 1-15 seconds average
 
 ### **Scalability**
-| Workers | Concurrent Scans | Total Throughput |
-|---------|------------------|------------------|
-| 1       | 5                | ~10/min          |
-| 3       | 15               | ~30/min          |
-| 5       | 25               | ~50/min          |
+| Workers | Concurrent Scans (people) | Website Searches | Total Throughput |
+|---------|---------------------------|------------------|------------------|
+| 1       | 5                         | 200 in parallel  | ~10/min          |
+| 3       | 15                        | 600 in parallel  | ~30/min          |
+| 5       | 25                        | 1,000 in parallel| ~50/min          |
 
 ### **Resource Optimization**
 - **Persistent Browser Instances** - Reuse across scans (~10x throughput improvement, no cold start penalty)
 - **`networkidle2` Strategy** - Waits for AJAX content without getting stuck on persistent connections (sweet spot between `domcontentloaded` and `networkidle0`)
 - **Resource Blocking** - Blocks images/fonts/media (60-70% faster page loads, 50% less bandwidth)
-- **Parallel Processing** - 15 concurrent tabs processing 40 sites in ~30s (vs 20+ min sequential)
+- **Parallel Processing** - 15 concurrent tabs processing 40 sites per person in ~30s (vs 20+ min sequential)
 
 ---
 
@@ -285,7 +298,7 @@ node src/workers/scan-worker.js
 node src/workers/scan-worker.js
 ```
 
-With 3 workers and `prefetch=5`, you can process **15 scans simultaneously**.
+With 3 workers and `prefetch=5`, you can process **15 scans simultaneously** (15 people × 40 sites = 600 website searches in parallel).
 
 ---
 
