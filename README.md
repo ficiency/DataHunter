@@ -1,9 +1,12 @@
 <div align="center">
-  <img src="docs/gh_logo.png" alt="DataHunter Logo" width="80" style="vertical-align: middle;"/> <h1 style="display: inline;">DataHunter</h1>
+  <h1>
+    <img src="docs/gh_logo.png" alt="DataHunter Logo" width="60" style="vertical-align: middle;"/> 
+    DataHunter
+  </h1>
   
-  ### Data Discovery & Privacy Scanner
+  <h3>Data Discovery & Privacy Scanner</h3>
   
-  A scalable, production-ready web scraping system that discovers personal information across multiple data broker websites. Built with Node.js, Puppeteer, RabbitMQ, and React.
+  <p>A scalable, production-ready web scraping system that discovers personal information across multiple data broker websites. Built with Node.js, Puppeteer, RabbitMQ, and React.</p>
 </div>
 
 ## 🎬 Demo
