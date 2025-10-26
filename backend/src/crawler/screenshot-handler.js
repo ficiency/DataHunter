@@ -50,8 +50,8 @@ class ScreenshotHandler {
                 fullPage: false,
             });
     
-            // Return relative path for database
-            const relativePath = `${scanId}/${filename}`;
+            // Return relative path for database (must match static route)
+            const relativePath = `uploads/screenshots/${scanId}/${filename}`;
             console.log(`📸 Screenshot saved: ${relativePath}`);
     
             return relativePath;
