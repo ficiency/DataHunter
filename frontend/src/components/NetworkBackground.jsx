@@ -24,12 +24,12 @@ function NetworkBackground({ activeNodes = 0, isScanning = false }) {
 
     // Create nodes ONLY ONCE
     const createNodes = () => {
-      const nodeCount = Math.floor((width * height) / 15000)
+      const nodeCount = Math.floor((width * height) / 12000)
       const nodes = []
 
       for (let i = 0; i < nodeCount; i++) {
-        const baseVx = (Math.random() - 0.5) * 0.3
-        const baseVy = (Math.random() - 0.5) * 0.3
+        const baseVx = (Math.random() - 0.5) * 1.0
+        const baseVy = (Math.random() - 0.5) * 1.0
         
         nodes.push({
           x: Math.random() * width,
@@ -160,7 +160,7 @@ function NetworkBackground({ activeNodes = 0, isScanning = false }) {
   useEffect(() => {
     if (nodesRef.current.length === 0) return
 
-    const velocityMultiplier = isScanning ? 9 : 1
+    const velocityMultiplier = isScanning ? 5 : 1
 
     nodesRef.current.forEach(node => {
       node.vx = node.baseVx * velocityMultiplier
