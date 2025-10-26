@@ -1,0 +1,276 @@
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import FindingCard from './FindingCard'
+import { ScanDurationCard, SitesFoundCard, ExposureCard } from './MetricsCard'
+
+// Website Details Component
+function WebsiteDetails({ website, findings }) {
+  const getWebsiteName = (url) => {
+    try {
+      const urlObj = new URL(url)
+      return urlObj.hostname.replace('www.', '')
+    } catch {
+      return url
+    }
+  }
+
+  const getTypeEmoji = (type) => {
+    switch (type) {
+      case 'email':
+        return '📧'
+      case 'phone':
+        return '📱'
+      case 'address':
+        return '📍'
+      case 'name':
+        return '👤'
+      default:
+        return '📄'
+    }
+  }
+
+  const groupedByType = findings.reduce((acc, finding) => {
+    if (!acc[finding.data_type]) {
+      acc[finding.data_type] = []
+    }
+    acc[finding.data_type].push(finding)
+    return acc
+  }, {})
+
+  const dataTypes = Object.keys(groupedByType)
+  const websiteName = getWebsiteName(website)
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="mb-4 pb-3 border-b border-gray-300">
+        <h4 className="text-sm font-semibold text-black truncate">
+          {websiteName}
+        </h4>
+        <p className="text-xs text-gray-500 mt-1">
+          {findings.length} data point{findings.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      {/* Summary by type */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        {dataTypes.map(type => (
+          <div
+            key={type}
+            className="bg-white border border-gray-200 rounded-lg p-2"
+          >
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">{getTypeEmoji(type)}</span>
+              <div>
+                <p className="text-xs text-gray-400 capitalize">
+                  {type}
+                </p>
+                <p className="text-sm font-medium text-black">
+                  {groupedByType[type].length}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Detailed findings */}
+      <div className="space-y-1">
+        <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+          Found Data
+        </h4>
+        {findings.slice(0, 10).map((finding, index) => (
+          <div
+            key={finding.id}
+            className="flex items-start space-x-2 text-sm py-1"
+          >
+            <span className="text-base">{getTypeEmoji(finding.data_type)}</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-gray-400 capitalize text-xs">
+                {finding.data_type}:
+              </span>
+              <span className="text-black ml-2 font-mono text-xs break-all">
+                {finding.found_value}
+              </span>
+            </div>
+          </div>
+        ))}
+        {findings.length > 10 && (
+          <p className="text-xs text-gray-600 italic pt-2">
+            +{findings.length - 10} more
+          </p>
+        )}
+      </div>
+
+      {/* Website link */}
+      <div className="mt-4 pt-3 border-t border-gray-300">
+        <a
+          href={website}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center text-xs text-primary hover:text-primary-light transition font-medium"
+        >
+          View on website
+          <svg
+            className="w-3 h-3 ml-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+          </svg>
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function ResultsView({ results, onNewScan }) {
+  const [selectedWebsite, setSelectedWebsite] = useState(null)
+
+  // Group findings by website
+  const groupFindingsByWebsite = () => {
+    const grouped = {}
+    results.findings.forEach(finding => {
+      const url = finding.website_url
+      if (!grouped[url]) {
+        grouped[url] = []
+      }
+      grouped[url].push(finding)
+    })
+    return grouped
+  }
+
+  const groupedFindings = groupFindingsByWebsite()
+  const sitesWithData = Object.keys(groupedFindings).length
+  const totalFindings = results.findings.length
+  const percentage = ((sitesWithData / results.totalSites) * 100).toFixed(1)
+
+  // Auto-select first website on load
+  useEffect(() => {
+    const websites = Object.keys(groupedFindings)
+    if (websites.length > 0 && !selectedWebsite) {
+      setSelectedWebsite(websites[0])
+    }
+  }, [groupedFindings, selectedWebsite])
+
+  return (
+    <motion.div
+        className="w-full max-w-7xl mx-auto px-4"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="minimal-card rounded-xl shadow-2xl p-6 border border-border-dark">
+          {/* Header */}
+          <motion.div
+            className="relative mb-8"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200 }}
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-semibold text-black mb-2 tracking-tight">
+                𓄀 DataHunter | Scan Complete
+              </h2>
+            </div>
+            
+            {/* Start New Scan Button - Absolute positioned */}
+            <motion.button
+              onClick={onNewScan}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="absolute right-0 top-0 px-6 py-2 bg-primary hover:bg-primary-hover rounded-lg font-medium text-white text-sm transition-all glow"
+            >
+              Start New Scan
+            </motion.button>
+          </motion.div>
+
+          {/* 3-Column Layout */}
+          <div className="flex gap-6 mb-8" style={{ minHeight: '460px', maxHeight: '460px' }}>
+            {/* Left Column - Metrics (15% width) */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex-shrink-0 space-y-4"
+              style={{ width: '15%' }}
+            >
+              <ScanDurationCard
+                scan={results.scan}
+              />
+              <SitesFoundCard
+                sitesWithData={sitesWithData}
+                totalSites={results.totalSites}
+                totalFindings={totalFindings}
+              />
+              <ExposureCard
+                percentage={percentage}
+              />
+            </motion.div>
+
+            {/* Middle Column - Website Cards (45% width) */}
+            <div className="flex-shrink-0 space-y-3 overflow-y-auto" style={{ width: '45%', maxHeight: '600px' }}>
+              {Object.entries(groupedFindings).length > 0 ? (
+                Object.entries(groupedFindings).map(([website, findings], index) => (
+                  <motion.div
+                    key={website}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                  >
+                    <FindingCard
+                      website={website}
+                      findings={findings}
+                      isSelected={selectedWebsite === website}
+                      onClick={() => setSelectedWebsite(website)}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-center py-8"
+                >
+                  <h3 className="text-lg font-semibold text-black mb-2">
+                    No Data Found
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Your information was not found on any scanned websites
+                  </p>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Right Column - Details Panel (40% width) */}
+            <div className="flex-1 bg-gray-50 rounded-lg p-5 border border-gray-200 overflow-y-auto" style={{ maxHeight: '600px' }}>
+              {selectedWebsite ? (
+                <WebsiteDetails 
+                  website={selectedWebsite} 
+                  findings={groupedFindings[selectedWebsite]} 
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-center">
+                  <div>
+                    <p className="text-gray-400 text-sm">
+                      Select a website to view details
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+  )
+}
+
+export default ResultsView
+
