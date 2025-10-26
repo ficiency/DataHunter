@@ -2,6 +2,14 @@
 
 A scalable, production-ready web scraping system that discovers personal information across multiple data broker websites. Built with Node.js, Puppeteer, RabbitMQ, and React.
 
+## 🎬 Demo
+
+![DataHunter Demo](docs/datahunt_demo.gif)
+
+*Real-time scanning across 15+ data broker websites with live progress tracking*
+
+---
+
 ## 🎯 Features
 
 - **Concurrent Web Scraping** - Scan 15+ websites simultaneously using Puppeteer Cluster
@@ -17,31 +25,54 @@ A scalable, production-ready web scraping system that discovers personal informa
 ## 📁 Project Structure
 
 ```
-challenge/
+datahunter/                   # Root directory
 ├── backend/                  # Node.js backend
 │   ├── src/
 │   │   ├── api/             # REST API (Express)
+│   │   │   ├── controllers/ # Request handlers
+│   │   │   ├── routes/      # Express routes
+│   │   │   └── server.js    # Express setup
 │   │   ├── crawler/         # Web scraping logic
+│   │   │   ├── crawler-service.js
+│   │   │   ├── data-extractor.js
+│   │   │   ├── screenshot-handler.js
+│   │   │   └── sites-config.js
 │   │   ├── database/        # PostgreSQL integration
+│   │   │   ├── postgres.js
+│   │   │   └── schema.sql
 │   │   ├── queue/           # RabbitMQ integration
+│   │   │   └── rabbitmq-queue.js
 │   │   ├── utils/           # Encryption & PII masking
+│   │   │   ├── encryption.js
+│   │   │   └── pii-mask.js
 │   │   ├── workers/         # Background job workers
+│   │   │   └── scan-worker.js
 │   │   ├── config.js        # Configuration
 │   │   └── index.js         # Entry point
-│   ├── scripts/             # Utility scripts
+│   ├── scripts/             # Test scripts
 │   ├── package.json
 │   └── .env
 │
 ├── frontend/                 # React frontend
 │   ├── src/
 │   │   ├── components/      # UI components
+│   │   │   ├── InputForm.jsx
+│   │   │   ├── ScanningView.jsx
+│   │   │   ├── ResultsView.jsx
+│   │   │   ├── MetricsCard.jsx
+│   │   │   ├── FindingCard.jsx
+│   │   │   └── NetworkBackground.jsx
 │   │   ├── App.jsx          # Main app
-│   │   └── main.jsx         # Entry point
+│   │   ├── main.jsx         # Entry point
+│   │   └── index.css        # Global styles
 │   ├── package.json
-│   └── vite.config.js
+│   ├── vite.config.js
+│   └── tailwind.config.js
 │
-├── uploads/                  # Screenshots storage
+├── uploads/                  # Screenshots storage (shared)
+│   └── screenshots/
 ├── docker-compose.yml        # PostgreSQL + RabbitMQ
+├── .gitignore               # Git ignore rules
 └── README.md
 ```
 
@@ -58,7 +89,6 @@ challenge/
 ### **1. Start Infrastructure**
 
 ```bash
-cd challenge
 docker compose up -d
 ```
 
@@ -148,6 +178,8 @@ LOG_LEVEL=info
 Run multiple workers for better performance:
 
 ```bash
+cd backend
+
 # Terminal 1
 node src/workers/scan-worker.js
 
