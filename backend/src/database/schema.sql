@@ -17,5 +17,6 @@ CREATE TABLE IF NOT EXISTS findings (
     data_type VARCHAR(50) NOT NULL,
     found_value TEXT NOT NULL,
     screenshot_path VARCHAR(500),
-    found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processing_time DECIMAL(10, 3)
 );
