@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import axios from 'axios'
 import FindingCard from './FindingCard'
 import { ScanDurationCard, SitesFoundCard, ExposureCard } from './MetricsCard'
 
@@ -42,14 +43,6 @@ function WebsiteDetails({ website, findings }) {
   
   // Get screenshot path (should be the same for all findings from the same site)
   const screenshotPath = findings[0]?.screenshot_path
-  
-  // Debug logging
-  console.log('🔍 WebsiteDetails Debug:', {
-    website,
-    findingsCount: findings.length,
-    firstFinding: findings[0],
-    screenshotPath
-  })
 
   return (
     <div>
@@ -67,7 +60,7 @@ function WebsiteDetails({ website, findings }) {
       {screenshotPath && (
         <div className="mb-4">
           <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-2">
-            Screenshot
+            Preview
           </h4>
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <img 
@@ -169,11 +162,39 @@ function WebsiteDetails({ website, findings }) {
 
 function ResultsView({ results, onNewScan }) {
   const [selectedWebsite, setSelectedWebsite] = useState(null)
+  const [scan, setScan] = useState(results.scan)
+  const [findings, setFindings] = useState(results.findings)
+  const [isScanning, setIsScanning] = useState(results.scan.status === 'processing')
+
+  // Continue polling if scan is still in progress
+  useEffect(() => {
+    if (scan.status !== 'completed' && scan.status !== 'failed') {
+      setIsScanning(true) // Ensure scanning is true while polling
+      const pollInterval = setInterval(async () => {
+        try {
+          const response = await axios.get(`/api/scans/${scan.id}`)
+          setScan(response.data.scan)
+          setFindings(response.data.findings)
+          
+          if (response.data.scan.status === 'completed' || response.data.scan.status === 'failed') {
+            setIsScanning(false)
+            clearInterval(pollInterval)
+          }
+        } catch (error) {
+          console.error('Polling error:', error)
+        }
+      }, 2000)
+      
+      return () => clearInterval(pollInterval)
+    } else {
+      setIsScanning(false) // Set to false if scan is already completed
+    }
+  }, [scan.id, scan.status])
 
   // Group findings by website
   const groupFindingsByWebsite = () => {
     const grouped = {}
-    results.findings.forEach(finding => {
+    findings.forEach(finding => {
       const url = finding.website_url
       if (!grouped[url]) {
         grouped[url] = []
@@ -185,21 +206,15 @@ function ResultsView({ results, onNewScan }) {
 
   const groupedFindings = groupFindingsByWebsite()
   
-  // Sort websites by number of findings (most to least)
-  const sortedWebsites = Object.entries(groupedFindings).sort((a, b) => {
-    return b[1].length - a[1].length  // Sort descending by findings count
-  })
+  // Keep websites in the order they arrive (reverse to show oldest first)
+  const sortedWebsites = Object.entries(groupedFindings).reverse()
   
   const sitesWithData = Object.keys(groupedFindings).length
-  const totalFindings = results.findings.length
-  const percentage = ((sitesWithData / results.totalSites) * 100).toFixed(1)
-
-  // Auto-select first website on load (most data points)
-  useEffect(() => {
-    if (sortedWebsites.length > 0 && !selectedWebsite) {
-      setSelectedWebsite(sortedWebsites[0][0])  // Select website with most findings
-    }
-  }, [groupedFindings, selectedWebsite])
+  const totalFindings = findings.length
+  const totalSites = results.totalSites
+  // If scan is complete, show all sites scanned, otherwise show sites with data found so far
+  const scannedSites = isScanning ? sitesWithData : totalSites
+  const percentage = ((sitesWithData / totalSites) * 100).toFixed(1)
 
   return (
     <motion.div
@@ -217,9 +232,12 @@ function ResultsView({ results, onNewScan }) {
             transition={{ type: 'spring', stiffness: 200 }}
           >
             <div className="text-left">
-              <h2 className="text-xl font-semibold text-black mb-2 tracking-tight">
-                𓄀 DataHunter | Scan Complete
-              </h2>
+              <div className="flex items-center gap-2 mb-2">
+                <img src="/logo.png" alt="DataHunter Logo" className="h-6 w-6" />
+                <h2 className="text-xl font-semibold text-black tracking-tight">
+                  DataHunter | {isScanning ? 'Scan in Progress...' : 'Scan Complete'}
+                </h2>
+              </div>
             </div>
             
             {/* Start New Scan Button - Absolute positioned */}
@@ -243,9 +261,6 @@ function ResultsView({ results, onNewScan }) {
               className="flex-shrink-0 space-y-4"
               style={{ width: '15%' }}
             >
-              <ScanDurationCard
-                scan={results.scan}
-              />
               <SitesFoundCard
                 sitesWithData={sitesWithData}
                 totalSites={results.totalSites}
@@ -254,27 +269,34 @@ function ResultsView({ results, onNewScan }) {
               <ExposureCard
                 percentage={percentage}
               />
+              <ScanDurationCard
+                selectedWebsite={selectedWebsite}
+                findings={groupedFindings[selectedWebsite]}
+                isScanning={isScanning}
+              />
             </motion.div>
 
             {/* Middle Column - Website Cards (45% width) */}
-            <div className="flex-shrink-0 space-y-3 overflow-y-auto" style={{ width: '45%', maxHeight: '600px' }}>
-              {sortedWebsites.length > 0 ? (
-                sortedWebsites.map(([website, findings], index) => (
-                  <motion.div
-                    key={website}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + index * 0.1 }}
-                  >
-                    <FindingCard
-                      website={website}
-                      findings={findings}
-                      isSelected={selectedWebsite === website}
-                      onClick={() => setSelectedWebsite(website)}
-                    />
-                  </motion.div>
-                ))
-              ) : (
+            <div className="flex-shrink-0 space-y-3 overflow-y-auto overflow-x-hidden website-list-scroll pr-3" style={{ width: '45%', maxHeight: '600px' }}>
+              {/* Completed websites */}
+              {sortedWebsites.map(([website, findings], index) => (
+                <motion.div
+                  key={website}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                >
+                  <FindingCard
+                    website={website}
+                    findings={findings}
+                    isSelected={selectedWebsite === website}
+                    onClick={() => setSelectedWebsite(website)}
+                  />
+                </motion.div>
+              ))}
+              
+              {/* No data found (only if scan complete and no results) */}
+              {!isScanning && sortedWebsites.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -292,7 +314,7 @@ function ResultsView({ results, onNewScan }) {
             </div>
 
             {/* Right Column - Details Panel (40% width) */}
-            <div className="flex-1 bg-gray-50 rounded-lg p-5 border border-gray-200 overflow-y-auto" style={{ maxHeight: '600px' }}>
+            <div className="flex-1 bg-gray-50 rounded-lg p-5 border border-gray-200 overflow-y-auto overflow-x-hidden website-list-scroll" style={{ maxHeight: '600px' }}>
               {selectedWebsite ? (
                 <WebsiteDetails 
                   website={selectedWebsite} 
