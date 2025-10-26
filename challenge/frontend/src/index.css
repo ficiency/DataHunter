@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #FFFFFF;
+  min-height: 100vh;
+  color: #000000;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .glow {
+    box-shadow: 0 0 30px rgba(0, 102, 255, 0.3);
+  }
+  
+  .glow-success {
+    box-shadow: 0 0 30px rgba(0, 102, 255, 0.4);
+  }
+  
+  .glow-scanning {
+    box-shadow: 0 0 30px rgba(0, 102, 255, 0.5);
+  }
+
+  .border-glow {
+    border: 1px solid rgba(0, 102, 255, 0.3);
+  }
+
+  .minimal-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #E5E5E5;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Custom scrollbar for popup */
+  .popup-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .popup-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  .popup-scroll::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+
+  .popup-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+

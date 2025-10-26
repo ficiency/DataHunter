@@ -1,7 +1,7 @@
 {
-  "name": "challenge",
+  "name": "datahunter-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "DataHunter - Data Discovery & Privacy Scanner",
   "main": "index.js",
   "directories": {
     "test": "tests"

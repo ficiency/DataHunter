@@ -13,15 +13,15 @@ const POLL_INTERVAL = 3000; // Check every 3 seconds
 
 // Simulates different users searching for different people
 const TEST_CASES = [
-    { user_id: 1, target_name: 'John Doe', state: 'CA', priority: 8 }, // Done
-    { user_id: 2, target_name: 'Jane Smith', state: 'TX', priority: 5 }, // Done
-    { user_id: 3, target_name: 'Bob Johnson', state: 'NY', priority: 3 }, // Done
-    { user_id: 4, target_name: 'Alice Williams', state: 'FL', priority: 7 }, // Done
-    { user_id: 5, target_name: 'Michael Brown', state: 'IL', priority: 6 }, // Done
-    { user_id: 6, target_name: 'Sarah Davis', state: 'WA', priority: 9 }, // Done
-    { user_id: 7, target_name: 'David Miller', state: 'AZ', priority: 4 }, // Done
-    { user_id: 8, target_name: 'Emma Wilson', state: 'GA', priority: 2 }, // Done
-    { user_id: 9, target_name: 'James Martinez', state: 'NV', priority: 10 }, // Done
+    { user_id: 1, target_name: 'John Doe', state: 'CA', priority: 1 },
+    { user_id: 2, target_name: 'Jane Smith', state: 'TX', priority: 1 },
+    { user_id: 3, target_name: 'Bob Johnson', state: 'NY', priority: 1 },
+    { user_id: 4, target_name: 'Alice Williams', state: 'FL', priority: 1 },
+    { user_id: 5, target_name: 'Michael Brown', state: 'IL', priority: 1 },
+    { user_id: 6, target_name: 'Sarah Davis', state: 'WA', priority: 1 },
+    { user_id: 7, target_name: 'David Miller', state: 'AZ', priority: 1 },
+    { user_id: 8, target_name: 'Emma Wilson', state: 'GA', priority: 1 },
+    { user_id: 9, target_name: 'James Martinez', state: 'NV', priority: 1 },
 ];
 
 class RabbitMQFlowTester {

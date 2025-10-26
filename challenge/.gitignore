@@ -1,4 +1,54 @@
-node_modules
+# Dependencies
+backend/node_modules/
+frontend/node_modules/
+node_modules/
+
+# Environment variables
+backend/.env
 .env
-uploads
+.env.local
+.env.*.local
+
+# Build outputs
+frontend/dist/
+frontend/build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+backend/logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Screenshots (keep folder, ignore contents)
+uploads/screenshots/*.jpg
+uploads/screenshots/*.png
+uploads/screenshots/*.jpeg
+
+# Docker volumes
+postgres_data/
+rabbitmq_data/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+temp/
+tmp/
+
 synthesize.md
