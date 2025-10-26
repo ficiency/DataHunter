@@ -7,6 +7,8 @@ const ScreenshotHandler = require('./screenshot-handler');
 const db = require('../database/postgres');
 const SitesConfig = require('./sites-config');
 const config = require('../config');
+const { encrypt } = require('../utils/encryption');
+const { maskPII } = require('../utils/pii-mask');
 
 // Apply stealth mode
 puppeteer.use(StealthPlugin());
@@ -308,6 +310,9 @@ class CrawlerService extends EventEmitter {
 
         for (const finding of findings) {
             try {
+                // ENCRYPT the PII before storing
+                const encryptedValue = encrypt(finding.found_value);
+
                 // Insert finding first to get the ID
                 const result = await db.query(
                     `INSERT INTO findings (scan_id, website_url, data_type, found_value, found_at)
@@ -316,11 +321,14 @@ class CrawlerService extends EventEmitter {
                         scanId,
                         url,
                         finding.data_type,
-                        finding.found_value,
+                        encryptedValue,
                         new Date()
                     ]
                 );
-
+                
+                 // MASK in logs (never log real PII)
+                const maskedValue = maskPII(finding.found_value, finding.data_type);
+                console.log(`  💾 ${finding.data_type}: ${maskedValue}`);  // ← AGREGAR ESTA LÍNEA
                 saved++;
             } catch (error) {
                 console.error('❌ Failed to save finding:', error.message);

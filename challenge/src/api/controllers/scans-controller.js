@@ -1,5 +1,7 @@
 const db = require('../../database/postgres');
 const queue = require('../../queue/rabbitmq-queue');
+const { decrypt } = require('../../utils/encryption');
+
 
 // Connect rabbit when starting module
 queue.connect().catch(err =>  {
@@ -81,32 +83,28 @@ const getScanById = async (req, res) => {
 
         // Get scan
         const scanResult = await db.query(
-            `SELECT id, user_id, target_name, status, created_at, completed_at
-            FROM scans
-            WHERE id = $1`,
+            `SELECT * FROM scans WHERE id = $1`,
             [id]
         );
 
-        if (scanResult.rowCount === 0) {
-            return res.status(404).json({
-                error: 'Not found',
-                message: `Scan with id ${id} not found.`
-            });
+        if (scanResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Scan not found' });
         }
 
-        const scan = scanResult.rows[0];
-
         const findingsResult = await db.query(
-            `SELECT id, website_url, data_type, found_value, found_at
-            FROM findings
-            WHERE scan_id = $1
-            ORDER BY found_at DESC`,
+            `SELECT * FROM findings WHERE scan_id = $1 ORDER BY found_at DESC`,
             [id]
         );
 
-        res.status(200).json({
-            scan, 
-            findings: findingsResult.rows,
+        // DECRYPT findings before returning to user
+        const decryptedFindings = findingsResult.rows.map(finding => ({
+            ...finding,
+            found_value: decrypt(finding.found_value)  // ← DECRYPT here
+        }));
+
+        res.json({
+            scan: scanResult.rows[0],
+            findings: decryptedFindings
         });
     } catch (error) {
         console.error('Error fetching scan: ', error);
