@@ -1,73 +1,88 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 
-// Card 0: Scan Duration
-export function ScanDurationCard({ scan }) {
+// Card 0: Processing Time per Website
+export function ScanDurationCard({ selectedWebsite, findings, isScanning = false }) {
   const [animatedDuration, setAnimatedDuration] = useState(0)
+  const [prevDuration, setPrevDuration] = useState(0)
   
-  // Calculate duration in seconds
-  const calculateDuration = () => {
-    if (!scan?.completed_at || !scan?.created_at) return 0
-    
-    try {
-      const completed = new Date(scan.completed_at)
-      const created = new Date(scan.created_at)
-      
-      const durationMs = completed - created
-      const durationSec = durationMs / 1000
-      
-      // If negative or invalid, return 0
-      if (isNaN(durationSec) || durationSec < 0 || durationSec > 1000) {
-        return 0
-      }
-      
-      return durationSec
-    } catch (error) {
-      return 0
-    }
+  // Get processing time from first finding (all findings from same website have same processing_time)
+  const getProcessingTime = () => {
+    if (!findings || findings.length === 0) return 0
+    const processingTime = parseFloat(findings[0]?.processing_time || 0)
+    return isNaN(processingTime) ? 0 : processingTime
   }
   
-  const duration = calculateDuration()
+  const duration = getProcessingTime()
 
   useEffect(() => {
-    const durationMs = 1500
-    const steps = 30
-    const increment = duration / steps
-    let current = 0
+    if (duration === prevDuration) return  // No change, skip animation
+    
+    const animDuration = 800
+    const steps = 20
+    const difference = duration - animatedDuration
+    const increment = difference / steps
+    let current = animatedDuration
 
     const interval = setInterval(() => {
       current += increment
-      if (current >= duration) {
+      if ((increment > 0 && current >= duration) || (increment < 0 && current <= duration)) {
         setAnimatedDuration(duration)
+        setPrevDuration(duration)
         clearInterval(interval)
       } else {
         setAnimatedDuration(current)
       }
-    }, durationMs / steps)
+    }, animDuration / steps)
 
     return () => clearInterval(interval)
-  }, [duration])
+  }, [duration, selectedWebsite])
+
+  // Get website name for display
+  const getWebsiteName = (url) => {
+    if (!url) return '---'
+    try {
+      const urlObj = new URL(url)
+      return urlObj.hostname.replace('www.', '')
+    } catch {
+      return 'Select a site'
+    }
+  }
 
   return (
-    <div className="bg-white border border-primary/30 rounded-lg p-4">
-      <div className="text-center">
-        <h3 className="text-gray-500 text-xs uppercase tracking-wider mb-3">
-          Scan Time
-        </h3>
-        <motion.div
-          className="text-4xl font-bold text-black mb-2"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-        >
-          {duration > 0 ? (
-            <>{animatedDuration.toFixed(1)}<span className="text-2xl text-gray-400">s</span></>
-          ) : (
-            <span className="text-2xl text-gray-400">--</span>
-          )}
-        </motion.div>
-        <p className="text-gray-400 text-xs">
-          {duration === 0 ? '⏳ Calculating...' : duration < 10 ? '⚡ Lightning fast' : duration < 30 ? '🚀 Fast' : '✅ Completed'}
+    <div>
+      <div className="bg-white border border-primary/30 rounded-lg p-4">
+        <div className="text-center">
+          <h3 className="text-gray-500 text-xs uppercase tracking-wider mb-1">
+            Processing Time
+          </h3>
+          <p className="text-gray-400 text-xs mb-3 truncate">
+            {getWebsiteName(selectedWebsite)}
+          </p>
+          <motion.div
+            className="text-4xl font-bold text-black mb-2"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+          >
+            {duration > 0 ? (
+              <>{animatedDuration.toFixed(2)}<span className="text-2xl text-gray-400">s</span></>
+            ) : (
+              <span className="text-2xl text-gray-400">--</span>
+            )}
+          </motion.div>
+          <p className="text-gray-400 text-xs">
+            {duration === 0 ? '⏳ Select a website' : duration < 2 ? '⚡ Lightning fast' : duration < 5 ? '🚀 Fast' : '✅ Completed'}
+          </p>
+        </div>
+      </div>
+      
+      {/* Status indicator */}
+      <div className="text-center mt-4">
+        <p className="text-xs text-gray-400">
+          Status: <span className={isScanning ? 'text-blue-500' : 'text-green-500'}>
+            {isScanning ? '🔄 Scanning' : '✓ Completed'}
+          </span>
         </p>
       </div>
     </div>
@@ -79,14 +94,16 @@ export function SitesFoundCard({ sitesWithData, totalSites, totalFindings }) {
   const [animatedCount, setAnimatedCount] = useState(0)
 
   useEffect(() => {
-    const countDuration = 1500
-    const countSteps = 30
-    const countIncrement = sitesWithData / countSteps
-    let currentCount = 0
+    const countDuration = 1000
+    const countSteps = 20
+    const difference = sitesWithData - animatedCount  // Calculate difference
+    const countIncrement = difference / countSteps
+    let currentCount = animatedCount  // Start from current value
 
     const countInterval = setInterval(() => {
       currentCount += countIncrement
-      if (currentCount >= sitesWithData) {
+      if ((countIncrement > 0 && currentCount >= sitesWithData) || 
+          (countIncrement < 0 && currentCount <= sitesWithData)) {
         setAnimatedCount(sitesWithData)
         clearInterval(countInterval)
       } else {
@@ -124,15 +141,18 @@ export function ExposureCard({ percentage }) {
   const [animatedPercentage, setAnimatedPercentage] = useState(0)
 
   useEffect(() => {
-    const percentDuration = 1500
-    const percentSteps = 30
-    const percentIncrement = parseFloat(percentage) / percentSteps
-    let currentPercent = 0
+    const percentDuration = 1000
+    const percentSteps = 20
+    const targetPercent = parseFloat(percentage)
+    const difference = targetPercent - animatedPercentage  // Calculate difference
+    const percentIncrement = difference / percentSteps
+    let currentPercent = animatedPercentage  // Start from current value
 
     const percentInterval = setInterval(() => {
       currentPercent += percentIncrement
-      if (currentPercent >= parseFloat(percentage)) {
-        setAnimatedPercentage(parseFloat(percentage))
+      if ((percentIncrement > 0 && currentPercent >= targetPercent) || 
+          (percentIncrement < 0 && currentPercent <= targetPercent)) {
+        setAnimatedPercentage(targetPercent)
         clearInterval(percentInterval)
       } else {
         setAnimatedPercentage(currentPercent)
@@ -161,9 +181,8 @@ export function ExposureCard({ percentage }) {
       {/* Progress Bar */}
       <div className="overflow-hidden h-2 rounded-full bg-gray-200 border border-gray-300">
         <motion.div
-          initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
-          transition={{ duration: 1.5, ease: 'easeOut' }}
+          transition={{ duration: 1, ease: 'easeOut' }}
           className="h-full bg-primary"
         />
       </div>
