@@ -15,6 +15,8 @@ A scalable, production-ready web scraping system that discovers personal informa
 
 *Real-time scanning across 40 data broker websites with live progress tracking*
 
+*Watch the <a href="https://drive.google.com/file/d/1yJ2oA-KiKrYSYo9zTFQMe1h2R0OpaJt5/view?usp=sharing">full quality video here</a>.*
+
 ---
 
 ## 📖 What is a Scan?
@@ -552,24 +554,7 @@ MIT License - See LICENSE file for details
 
 ## 👤 Author
 
-**Luis Chapa**
-
----
-
-## 🎯 Technical Highlights
-
-**Key Architectural Decisions:**
-- **RabbitMQ over direct HTTP** - Async job queue with priority support, ACK/NACK fault tolerance, horizontal scaling
-- **Puppeteer Cluster over individual instances** - Persistent cluster with 15 concurrent tabs per worker, 10x memory efficiency (~800MB vs 8GB+)
-- **`networkidle2` navigation** - Ensures AJAX/dynamic content loads without stuck scans (balances speed vs completeness)
-- **AES-256-GCM encryption** - Authenticated encryption with unique IV per record, tamper detection via auth tags
-- **Singleton queue pattern** - Single persistent RabbitMQ connection shared across API, prevents connection exhaustion
-
-**Production-Ready Features:**
-- Horizontal scaling (workers + prefetch)
-- Real-time progress tracking with per-website metrics
-- Comprehensive error handling and retry logic
-- Security-first design (encryption, PII masking, input validation)
+**Luis Chapa Morin**
 
 ---
 
