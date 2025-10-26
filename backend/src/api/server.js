@@ -2,11 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware (configure to allow images)
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false  // Disable CSP in development
+}));
 
 // CORS - Allow all origins in development
 app.use(cors());
@@ -24,6 +28,8 @@ app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve screenshots as static files
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 // Request logger (simple)
 app.use((req, res, next) => {
