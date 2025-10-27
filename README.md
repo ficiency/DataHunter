@@ -534,7 +534,7 @@ This project is licensed under the **MIT License**.
 ```
 MIT License
 
-Copyright (c) 2025 Luis Castillo
+Copyright (c) 2025 Luis Chapa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -570,6 +570,6 @@ The author assumes no liability for misuse of this software.
 ---
 
 <div align="center">
-  <p>Built with ❤️ by <a href="https://github.com/yourusername">Luis Castillo</a></p>
+  <p>Built with ❤️ by <a href="https://github.com/yourusername">Luis Chapa Morin</a></p>
   <p>⭐ Star this repo if you find it useful!</p>
 </div>
