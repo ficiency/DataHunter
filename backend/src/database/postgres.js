@@ -28,9 +28,10 @@ const query = async (text, params) => {
         const res = await pool.query(text, params);
         const duration = Date.now() - start;
 
-        if (config.nodeEnv === 'development') {
-            console.log('Query executed');
-        }
+        // Optionally log slow queries only
+        // if (duration > 1000) {
+        //     console.log(`Slow query (${duration}ms)`);
+        // }
 
         return res;
     } catch (error) {

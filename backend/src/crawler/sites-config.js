@@ -615,7 +615,7 @@ class SitesConfig {
         ];
 
         this.scanConfig = {
-            maxUrlsPerScan: 40, // Scan all 40 sites
+            maxUrlsPerScan: 40, // Maximum number of sites to scan per request
             delayBetweenUrls: 2000,
             timeout: 30000,
             retryFailed: true,

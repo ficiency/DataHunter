@@ -28,7 +28,7 @@ class CrawlerService extends EventEmitter {
     getClusterOptions() {
         return {
             concurrency: Cluster.CONCURRENCY_PAGE,       // Create multiple "contexts" (like separated incognito windows)
-            maxConcurrency: 15,                              // Max 5 websites per parallel scan.
+            maxConcurrency: 15,                              // Max 15 websites per parallel scan.
             puppeteer,
             puppeteerOptions: {                           
                 headless: config.puppeteer.headless,        // NO UI
@@ -46,7 +46,7 @@ class CrawlerService extends EventEmitter {
             },
             timeout: config.puppeteer.timeout,              // Timeout per page
             retryLimit: 3,                                  // If failes, retries 3x
-            retryDelay: 3000,                               // Waits 2s between retries
+            retryDelay: 3000,                               // Waits 3s between retries
             skipDuplicateUrls: true,                        // Prevent scanning duplicated urls
         };
     }
@@ -334,8 +334,8 @@ class CrawlerService extends EventEmitter {
                 );
                 
                  // MASK in logs (never log real PII)
-                const maskedValue = maskPII(finding.found_value, finding.data_type);
-                console.log(`  💾 ${finding.data_type}: ${maskedValue}`);  // ← AGREGAR ESTA LÍNEA
+                //const maskedValue = maskPII(finding.found_value, finding.data_type);
+                //console.log(`  💾 ${finding.data_type}: ${maskedValue}`); 
                 saved++;
             } catch (error) {
                 console.error('❌ Failed to save finding:', error.message);
