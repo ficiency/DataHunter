@@ -7,7 +7,7 @@
   <h3>Data Discovery & Privacy Scanner</h3>
 </div>
 
-A scalable-ready web scraping system that discovers personal information across multiple data broker websites. Built with React, Node.js, Puppeteer Cluster, RabbitMQ, PostgreSQL and Docker.
+A scalable web scraping system that discovers personal information across multiple data broker websites. Built with React, Node.js, Puppeteer Cluster, RabbitMQ, PostgreSQL and Docker.
 
 ## 🎬 Demo
 
