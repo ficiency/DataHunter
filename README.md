@@ -13,9 +13,7 @@ A scalable, production-ready web scraping system that discovers personal informa
 
 ![DataHunter Demo](docs/datahunter_demo.gif)
 
-*Real-time scanning across 40 data broker websites with live progress tracking*
-
-*Watch the <a href="https://drive.google.com/file/d/1yJ2oA-KiKrYSYo9zTFQMe1h2R0OpaJt5/view?usp=sharing">full quality video here</a>.*
+*Real-time scanning across 40 data broker websites with live progress tracking. Watch the <a href="https://drive.google.com/file/d/1yJ2oA-KiKrYSYo9zTFQMe1h2R0OpaJt5/view?usp=sharing" target="_blank" rel="noopener noreferrer">full quality video here</a>.*
 
 ---
 
