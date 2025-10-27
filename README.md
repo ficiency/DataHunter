@@ -287,7 +287,6 @@ The **80% success rate** (32/40 unique websites) significantly outperforms indus
 
 **Proposed Solution:**
 - **Structured Data Parsing**: Extract JSON-LD, Schema.org markup, and JavaScript variables before falling back to regex
-- **Fuzzy Name Matching**: Use Levenshtein distance or AI models to match variations of target names
 - **AI as Last Resort**: When structured parsing fails, send page content to GPT-4 to extract PII with natural language understanding
 
 **Expected Impact:** Reduce false negatives by 40-50%, improve data quality
@@ -313,20 +312,7 @@ The **80% success rate** (32/40 unique websites) significantly outperforms indus
 
 ### **Redis Integration for Real-Time Features**
 
-#### **1. Real-Time Progress Tracking (Pub/Sub)**
-
-**Challenge:** Current system only shows "pending" or "completed" states. Users have no visibility into scan progress, causing uncertainty during the 25-40 second wait time.
-
-**Proposed Solution:**
-- **Redis Pub/Sub**: Workers publish granular progress updates (site-by-site completion)
-- **WebSocket Connection**: Frontend subscribes to scan-specific channels for live updates
-- **Progress Events**: Emit events for each completed site, findings discovered, and errors encountered
-
-**Expected Impact:** Improve UX with live progress bars, reduce perceived wait time by 40-50%
-
----
-
-#### **2. Results Caching**
+#### **1. Results Caching**
 
 **Challenge:** Repeated searches for the same person (e.g., "John Doe CA") trigger 40 website scans every time, wasting resources and time even when data hasn't changed.
 
@@ -339,7 +325,7 @@ The **80% success rate** (32/40 unique websites) significantly outperforms indus
 
 ---
 
-#### **3. Job Deduplication (Distributed Lock)**
+#### **2. Job Deduplication (Distributed Lock)**
 
 **Challenge:** Multiple users searching for the same person simultaneously trigger duplicate scans, wasting resources and processing the same 40 websites multiple times in parallel.
 
