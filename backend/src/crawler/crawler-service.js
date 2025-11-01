@@ -92,6 +92,8 @@ class CrawlerService extends EventEmitter {
             this.scanTrackers.set(scanId, {
                 total: urls.length,
                 completed: 0,
+                successful: 0,
+                failed: 0,
                 startTime,
                 resolve: null,
                 reject: null
@@ -104,6 +106,7 @@ class CrawlerService extends EventEmitter {
             });
 
             for (const { url, siteName } of urls) {
+                console.log(`Queueing URL: ${url} for site: ${siteName}`);
                 this.cluster.queue({ 
                     url, 
                     siteName, 
@@ -119,9 +122,17 @@ class CrawlerService extends EventEmitter {
 
             // Wait for all URLs to complete
             await completionPromise;
-            console.log('All tasks completed')
+            
+            const tracker = this.scanTrackers.get(scanId);
+            const stats = tracker ? { 
+                total: tracker.total, 
+                successful: tracker.successful, 
+                failed: tracker.failed 
+            } : { total: 0, successful: 0, failed: 0 };
+            
+            console.log(`All tasks completed: ${stats.successful}/${stats.total} successful, ${stats.failed} failed`);
 
-            // Mark scan as completed
+            // Mark scan as completed (with or without errors)
             await this.updateScanStatus(scanId, 'completed');
 
             const endTime = Date.now();
@@ -148,7 +159,16 @@ class CrawlerService extends EventEmitter {
     // Setup cluster monitoring events
     setupClusterEvents(cluster, scanId) {
         cluster.on('taskerror', (err, data) => {
-            console.error(`[${data.siteName}] Task error: `, err.message);
+            // Task error is triggered after all retries failed
+            console.error(`[${data.siteName}] Failed after retries: ${err.message}`);
+            
+            // Mark as failed and increment counter
+            const tracker = this.scanTrackers.get(scanId);
+            if (tracker) {
+                tracker.failed++;
+                this.incrementScanProgress(scanId);
+            }
+            
             this.emit('site:error', {
                 scanId,
                 siteName: data.siteName,
@@ -195,14 +215,14 @@ class CrawlerService extends EventEmitter {
                     request.continue();
                 }
             });
-
+            console.log(`[${siteName}] Navigating to: ${url}`);
             // Navigate
             await page.goto(url, {
                 waitUntil: 'networkidle2',
                 timeout: config.puppeteer.timeout,
             });
 
-            console.log(`[${siteName}] Page loaded`);
+            //console.log(`[${siteName}] Page loaded`);
 
             // Extract page content
             const pageContent = await page.evaluate(() => {
@@ -239,12 +259,17 @@ class CrawlerService extends EventEmitter {
 
             this.emit('site:completed', { scanId, siteName, count: findings.length, processingTime });
             console.log(`[${siteName}] Completed in ${processingTime}s`);
+            
+            // Mark as successful and increment counter
+            const tracker = this.scanTrackers.get(scanId);
+            if (tracker) {
+                tracker.successful++;
+                this.incrementScanProgress(scanId);
+            }
         } catch (error) {
-            console.error(`[${siteName}] Error: `, error.message);
+            console.error(`[${siteName}] Error: ${error.message} (cluster will retry)`);
             throw error; //Cluster handles retry automatically
-        } finally {
-            // ADD: Increment completion counter
-            this.incrementScanProgress(scanId);
+            // DO NOT increment here - cluster will retry and then trigger taskerror
         }
     }
 
@@ -254,6 +279,7 @@ class CrawlerService extends EventEmitter {
         if (!tracker) return;
 
         tracker.completed++;
+        console.log(`Progress: ${tracker.completed}/${tracker.total} for scan ${scanId}`);
         
         // Check if scan is complete
         if (tracker.completed >= tracker.total) {
