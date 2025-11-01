@@ -96,11 +96,21 @@ const getScanById = async (req, res) => {
             [id]
         );
 
-        // DECRYPT findings before returning to user
-        const decryptedFindings = findingsResult.rows.map(finding => ({
-            ...finding,
-            found_value: decrypt(finding.found_value)  // ← DECRYPT here
-        }));
+        // DECRYPT findings before returning to user (skip decryption for failed URLs)
+        const decryptedFindings = findingsResult.rows.map(finding => {
+            const result = { ...finding };
+            // Only decrypt if status is 'success' and found_value is not empty
+            if (finding.status === 'success' && finding.found_value) {
+                try {
+                    result.found_value = decrypt(finding.found_value);
+                } catch (error) {
+                    console.error(`Failed to decrypt finding ${finding.id}: ${error.message}`);
+                    result.found_value = '[decryption error]';
+                }
+            }
+            // For failed URLs, found_value is already empty, just return as is
+            return result;
+        });
 
         res.json({
             scan: scanResult.rows[0],

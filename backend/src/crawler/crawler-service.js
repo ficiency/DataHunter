@@ -158,7 +158,7 @@ class CrawlerService extends EventEmitter {
 
     // Setup cluster monitoring events
     setupClusterEvents(cluster, scanId) {
-        cluster.on('taskerror', (err, data) => {
+        cluster.on('taskerror', async (err, data) => {
             // Task error is triggered after all retries failed
             console.error(`[${data.siteName}] Failed after retries: ${err.message}`);
             
@@ -167,6 +167,27 @@ class CrawlerService extends EventEmitter {
             if (tracker) {
                 tracker.failed++;
                 this.incrementScanProgress(scanId);
+            }
+            
+            // Save failed URL to findings table with status='failed'
+            try {
+                await db.query(
+                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, status, error_message, found_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [
+                        scanId,
+                        data.url,
+                        'error',
+                        '',
+                        'failed',
+                        err.message,
+                        new Date()
+                    ]
+                );
+                console.log(`[${data.siteName}] Failed URL saved to findings table`);
+            } catch (dbError) {
+                // No throw - don't block the scan if DB save fails
+                console.error(`Failed to save error to DB: ${dbError.message}`);
             }
             
             this.emit('site:error', {
@@ -346,13 +367,14 @@ class CrawlerService extends EventEmitter {
 
                 // Insert finding with screenshot path and processing time
                 const result = await db.query(
-                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, found_at, screenshot_path, processing_time)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, status, found_at, screenshot_path, processing_time)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
                     [
                         scanId,
                         url,
                         finding.data_type,
                         encryptedValue,
+                        'success',  // Explicit status for successful findings
                         new Date(),
                         screenshotPath,  // Add screenshot path
                         processingTime   // Add processing time
