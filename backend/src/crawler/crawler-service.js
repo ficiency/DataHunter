@@ -45,8 +45,8 @@ class CrawlerService extends EventEmitter {
                 ],
             },
             timeout: config.puppeteer.timeout,              // Timeout per page
-            retryLimit: 3,                                  // If failes, retries 3x
-            retryDelay: 3000,                               // Waits 3s between retries
+            retryLimit: 2,                                  // If failes, retries 2x
+            retryDelay: 2000,                               // 2 seconds delay between retries
             skipDuplicateUrls: true,                        // Prevent scanning duplicated urls
         };
     }
@@ -267,9 +267,22 @@ class CrawlerService extends EventEmitter {
             const siteEndTime = Date.now();
             const processingTime = ((siteEndTime - siteStartTime) / 1000).toFixed(3);  // in seconds
 
+            // Take screenshot BEFORE saveFindings (while we still have the page)
+            let screenshotPath = null;
+            if (findings.length > 0 && this.enableScreenshots && page) {
+                try {
+                    const timestamp = Date.now();
+                    screenshotPath = await this.screenshotHandler.takeScreenshot(page, scanId, timestamp);
+                    console.log(`Screenshot captured: ${screenshotPath}`);
+                } catch (error) {
+                    console.error('Screenshot failed:', error.message);
+                    // Continue without screenshot
+                }
+            }
+
             // Add metadata and save with screenshots
             if (findings.length > 0) {
-                await this.saveFindings(scanId, findings, url, page, processingTime);
+                await this.saveFindings(scanId, findings, url, screenshotPath, processingTime);
 
                 this.emit('findings:found', {
                     scanId,
@@ -337,61 +350,63 @@ class CrawlerService extends EventEmitter {
         return { saved, failed };
     }
     */
-    // Save findings with screenshots
-    async saveFindings(scanId, findings, url, page, processingTime) {
+    // Save findings with screenshots (batch INSERT for performance)
+    async saveFindings(scanId, findings, url, screenshotPath, processingTime) {
+        if (findings.length === 0) {
+            return { saved: 0, failed: 0 };
+        }
+
         let saved = 0;
         let failed = 0;
 
-        // Take screenshot ONCE for the entire page (not per finding)
-        let screenshotPath = null;
-        if (this.enableScreenshots && page) {
-            try {
-                // Use scan_id + timestamp for unique screenshot name
-                const timestamp = Date.now();
-                screenshotPath = await this.screenshotHandler.takeScreenshot(
-                    page,
-                    scanId,
-                    timestamp  // Use timestamp instead of finding_id
-                );
-                console.log(`📸 Screenshot captured: ${screenshotPath}`);
-            } catch (error) {
-                console.error('⚠️  Screenshot failed:', error.message);
-                // Continue without screenshot
-            }
-        }
+        // Process in chunks to avoid PostgreSQL parameter limit (~32,767)
+        // Each finding uses 8 parameters, so safe chunk size is ~4,000
+        const CHUNK_SIZE = 500; // Conservative chunk size for safety
+        const foundAt = new Date();
 
-        for (const finding of findings) {
-            try {
-                // ENCRYPT the PII before storing
-                const encryptedValue = encrypt(finding.found_value);
+        for (let i = 0; i < findings.length; i += CHUNK_SIZE) {
+            const chunk = findings.slice(i, i + CHUNK_SIZE);
 
-                // Insert finding with screenshot path and processing time
-                const result = await db.query(
-                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, status, found_at, screenshot_path, processing_time)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-                    [
+            try {
+                const values = [];
+                const placeholders = [];
+
+                chunk.forEach((finding, index) => {
+                    const offset = index * 8; // 8 parameters per finding
+                    placeholders.push(
+                        `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`
+                    );
+
+                    // Encrypt PII before storing
+                    const encryptedValue = encrypt(finding.found_value);
+
+                    // Add values in order: scan_id, website_url, data_type, found_value, status, found_at, screenshot_path, processing_time
+                    values.push(
                         scanId,
                         url,
                         finding.data_type,
                         encryptedValue,
-                        'success',  // Explicit status for successful findings
-                        new Date(),
-                        screenshotPath,  // Add screenshot path
-                        processingTime   // Add processing time
-                    ]
+                        'success',
+                        foundAt,
+                        screenshotPath,
+                        processingTime
+                    );
+                });
+
+                await db.query(
+                    `INSERT INTO findings (scan_id, website_url, data_type, found_value, status, found_at, screenshot_path, processing_time)
+                     VALUES ${placeholders.join(', ')}`,
+                    values
                 );
                 
-                 // MASK in logs (never log real PII)
-                //const maskedValue = maskPII(finding.found_value, finding.data_type);
-                //console.log(`  💾 ${finding.data_type}: ${maskedValue}`); 
-                saved++;
+                saved += chunk.length;
             } catch (error) {
-                console.error('❌ Failed to save finding:', error.message);
-                failed++;
+                console.error(`Failed to save batch (${chunk.length} findings):`, error.message);
+                failed += chunk.length;
             }
         }
 
-        console.log(`💾 Saved: ${saved}, Failed: ${failed}`);
+        console.log(`Saved: ${saved}, Failed: ${failed}`);
         return { saved, failed };
     }
 
